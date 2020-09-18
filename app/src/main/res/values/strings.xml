@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">CurrencyConverter</string>
+    <string-array name="currency_array">
+        <item>CRN_1</item>
+        <item>CRN_2</item>
+        <item>CRN_3</item>
+        <item>CRN_4</item>
+        <item>CRN_5</item>
+        <item>CRN_6</item>
+        <item>CRN_7</item>
+        <item>CRN_8</item>
+    </string-array>
 </resources>
