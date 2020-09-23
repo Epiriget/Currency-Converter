@@ -31,7 +31,7 @@ import java.util.Iterator;
 import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
-
+    private Converter converter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,12 +71,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
+        converter = new Converter(getApplicationContext());
     }
 
     public class ExchangeRateFetcher extends AsyncTask<Void, Void, String> {
         private static final String BANK_URL = "https://www.cbr-xml-daily.ru/daily_json.js";
-        private static final String FILENAME = "currentExchangeRate";
 
         @Override
         protected String doInBackground(Void... voids) {
@@ -146,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                     int intNominal = Integer.parseInt(nominal);
                     double valuePerNote = Double.parseDouble(value) / intNominal;
 
-                    output.append(String.format("%s %s %f\n", charCode, name, valuePerNote));
+                    output.append(String.format("%s_%s_%f\n", charCode, name, valuePerNote));
                 }
 
             } catch (JSONException e) {
@@ -156,24 +155,13 @@ public class MainActivity extends AppCompatActivity {
 
             FileOutputStream outputStream;
             try {
-                outputStream = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+                outputStream = openFileOutput(getString(R.string.file_name), Context.MODE_PRIVATE);
                 outputStream.write(output.toString().getBytes());
                 outputStream.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-
-            FileInputStream inputStream;
-            try {
-                inputStream = openFileInput(FILENAME);
-                byte[] buffer = new byte[inputStream.available()];
-                inputStream.read(buffer);
-                String str = new String(buffer);
-                inputStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
 
             super.onPostExecute(s);
