@@ -3,6 +3,7 @@ package com.example.currencyconverter;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,6 +19,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.util.HashMap;
 
@@ -31,7 +33,26 @@ public class ConverterTabFragment extends Fragment {
     private Spinner spinnerTo;
     private EditText editTextFrom;
     private EditText editTextTo;
+    private TextView labelFrom;
+    private TextView labelTo;
     private Converter mConverter;
+    private String sharedPrefFile = "com.example.currencyconverter";
+    private SharedPreferences mPreferences;
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString("editTextFrom", editTextFrom.getText().toString());
+        editor.putString("editTextTo", editTextTo.getText().toString());
+        editor.putInt("spinnerTo", spinnerTo.getSelectedItemPosition());
+        editor.putInt("spinnerFrom", spinnerFrom.getSelectedItemPosition());
+        editor.putString("labelFrom", labelFrom.getText().toString());
+        editor.putString("labelTo", labelTo.getText().toString());
+        editor.apply();
+    }
+
 
     public ConverterTabFragment(Converter converter) {
         mConverter = converter;
@@ -48,16 +69,12 @@ public class ConverterTabFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-//            mParam1 = getArguments().getString(ARG_PARAM1);
-//            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+        mPreferences = getContext().getSharedPreferences(sharedPrefFile, Context.MODE_PRIVATE);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_converter_tab, container, false);
     }
 
@@ -69,6 +86,19 @@ public class ConverterTabFragment extends Fragment {
         spinnerTo = view.findViewById(R.id.spinner_to);
         editTextFrom = view.findViewById(R.id.value_input_from);
         editTextTo = view.findViewById(R.id.value_input_to);
+        labelFrom = view.findViewById(R.id.currency_label_from);
+        labelTo = view.findViewById(R.id.currency_label_to);
+
+
+
+        HashMap<String, Double> valueMap = mConverter.getValueMap();
+        CharSequence[] charCodes = valueMap.keySet().toArray(new CharSequence[0]);
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(view.getContext(),
+                android.R.layout.simple_spinner_item, charCodes);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFrom.setAdapter(adapter);
+        spinnerTo.setAdapter(adapter);
+
 
         editTextFrom.addTextChangedListener(new TextWatcher() {
             @Override
@@ -95,6 +125,7 @@ public class ConverterTabFragment extends Fragment {
         spinnerTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                labelTo.setText(mConverter.getFullName(parent.getItemAtPosition(position).toString()));
                 editTextFrom.setText(editTextFrom.getText());
             }
 
@@ -107,6 +138,7 @@ public class ConverterTabFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 editTextFrom.setText(editTextFrom.getText());
+                labelFrom.setText(mConverter.getFullName(parent.getItemAtPosition(position).toString()));
             }
 
             @Override
@@ -114,14 +146,23 @@ public class ConverterTabFragment extends Fragment {
 
             }
         });
+        if(savedInstanceState == null) {
+            int usdPosition = adapter.getPosition("USD");
+            int rubPosition = adapter.getPosition("RUB");
+            spinnerFrom.setSelection(usdPosition);
+            spinnerTo.setSelection(rubPosition);
+            editTextFrom.setText(String.format("%.3f", 1.0));
+        }
+        if(mPreferences.contains("editTextFrom")) {
+            editTextFrom.setText(mPreferences.getString("editTextFrom", ""));
+            editTextTo.setText(mPreferences.getString("editTextTo", ""));
+            labelFrom.setText(mPreferences.getString("labelFrom", ""));
+            labelTo.setText(mPreferences.getString("labelTo", ""));
+            spinnerTo.setSelection(mPreferences.getInt("spinnerTo", 0));
+            spinnerFrom.setSelection(mPreferences.getInt("spinnerFrom", 0));
+        }
 
 
-        HashMap<String, Double> valueMap = mConverter.getValueMap();
-        CharSequence[] charCodes = valueMap.keySet().toArray(new CharSequence[0]);
-        ArrayAdapter<CharSequence> adapterFrom = new ArrayAdapter<>(view.getContext(),
-                android.R.layout.simple_spinner_item, charCodes);
-        adapterFrom.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerFrom.setAdapter(adapterFrom);
-        spinnerTo.setAdapter(adapterFrom);
+
     }
 }

@@ -1,15 +1,14 @@
 package com.example.currencyconverter;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
 
 import android.content.Context;
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
@@ -32,10 +31,15 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
     private Converter converter;
+    private ConverterTabFragment converterTabFragment;
+    private ListTabFragment listTabFragment;
+    private String sharedPrefFile = "com.example.currencyconverter";
+    private SharedPreferences mPreferences;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         converter = new Converter(getApplicationContext());
         if(converter.getValueMap() == null) {
             new ExchangeRateFetcher().execute();
@@ -48,8 +52,9 @@ public class MainActivity extends AppCompatActivity {
         final ViewPager viewPager = findViewById(R.id.pager);
         final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(),
                 tabLayout.getTabCount(), converter);
+        converterTabFragment = (ConverterTabFragment) adapter.getItem(0);
+        listTabFragment = (ListTabFragment) adapter.getItem(1);
         viewPager.setAdapter(adapter);
-
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
     public class ExchangeRateFetcher extends AsyncTask<Void, Void, String> {
         private static final String BANK_URL = "https://www.cbr-xml-daily.ru/daily_json.js";
