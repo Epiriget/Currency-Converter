@@ -10,18 +10,21 @@ import com.example.currencyconverter.ListTabFragment;
 
 public class PagerAdapter extends FragmentStatePagerAdapter {
     int mNumOfTabs;
-    public PagerAdapter(@NonNull FragmentManager fm, int behavior) {
+    private Converter mConverter;
+    public PagerAdapter(@NonNull FragmentManager fm, int behavior, Converter converter) {
         super(fm, behavior);
         mNumOfTabs = behavior;
+        mConverter = converter;
     }
 
     @NonNull
     @Override
     public Fragment getItem(int position) {
         switch (position) {
-            case 0: return new ConverterTabFragment();
-            case 1: return new ListTabFragment();
-            default: return new ConverterTabFragment();
+            case 0: return ConverterTabFragment.newInstance(mConverter);
+            case 1: return ListTabFragment.newInstance("par1", "par2");
+            default: return new ConverterTabFragment(mConverter
+            );
         }
     }
 
@@ -30,3 +33,4 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
         return mNumOfTabs;
     }
 }
+

@@ -36,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        converter = new Converter(getApplicationContext());
+        if(converter.getValueMap() == null) {
+            new ExchangeRateFetcher().execute();
+        }
 
         TabLayout tabLayout = findViewById(R.id.tab_layout);
         tabLayout.addTab(tabLayout.newTab().setText("Converter"));
@@ -43,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
         final ViewPager viewPager = findViewById(R.id.pager);
         final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(),
-                tabLayout.getTabCount());
+                tabLayout.getTabCount(), converter);
         viewPager.setAdapter(adapter);
 
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -71,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        converter = new Converter(getApplicationContext());
     }
 
     public class ExchangeRateFetcher extends AsyncTask<Void, Void, String> {
@@ -147,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
 
                     output.append(String.format("%s_%s_%f\n", charCode, name, valuePerNote));
                 }
+                output.append(String.format("%s_%s_%f\n", "RUB", "Российский рубль", 1.0));
 
             } catch (JSONException e) {
                 e.printStackTrace();
