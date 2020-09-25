@@ -2,63 +2,62 @@ package com.example.currencyconverter;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ListTabFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+
 public class ListTabFragment extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
+    private ListView listView;
+    private Converter mConverter;
     public ListTabFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ListTabFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ListTabFragment newInstance(String param1, String param2) {
-        ListTabFragment fragment = new ListTabFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public static ListTabFragment newInstance() {
+        return new ListTabFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+        mConverter = new Converter(getContext());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_list_tab, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        listView = view.findViewById(R.id.list_view);
+        HashMap<String, Double> valueMap = mConverter.getValueMap();
+        HashMap<String, String> nameMap = mConverter.getFullNameMap();
+
+        if (valueMap != null) {
+            String[] charCodes = valueMap.keySet().toArray(new String[0]);
+            List<ListItem> listItems = new ArrayList<>();
+            for (String s: charCodes) {
+                double dbl = valueMap.get(s);
+                listItems.add(new ListItem(s, nameMap.get(s), valueMap.get(s)));
+            }
+            ListView listView = view.findViewById(R.id.list_view);
+            ListItemAdapter adapter = new ListItemAdapter
+                    (view.getContext(), R.layout.list_item, listItems);
+            listView.setAdapter(adapter);
+        }
     }
 }

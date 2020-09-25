@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
         final ViewPager viewPager = findViewById(R.id.pager);
         final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(),
-                tabLayout.getTabCount(), converter);
+                tabLayout.getTabCount());
         converterTabFragment = (ConverterTabFragment) adapter.getItem(0);
         listTabFragment = (ListTabFragment) adapter.getItem(1);
         viewPager.setAdapter(adapter);
@@ -88,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(Void... voids) {
-            String tmp = getRateInfo();
             return getRateInfo();
         }
 
@@ -132,6 +131,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
+
+
             return rateJSONString;
         }
 
@@ -157,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
                     output.append(String.format("%s_%s_%f\n", charCode, name, valuePerNote));
                 }
                 output.append(String.format("%s_%s_%f\n", "RUB", "Российский рубль", 1.0));
-
             } catch (JSONException e) {
                 e.printStackTrace();
             }

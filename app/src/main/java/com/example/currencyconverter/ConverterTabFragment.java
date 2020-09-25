@@ -43,24 +43,23 @@ public class ConverterTabFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString("editTextFrom", editTextFrom.getText().toString());
-        editor.putString("editTextTo", editTextTo.getText().toString());
-        editor.putInt("spinnerTo", spinnerTo.getSelectedItemPosition());
-        editor.putInt("spinnerFrom", spinnerFrom.getSelectedItemPosition());
-        editor.putString("labelFrom", labelFrom.getText().toString());
-        editor.putString("labelTo", labelTo.getText().toString());
-        editor.apply();
-    }
+//        SharedPreferences.Editor editor = mPreferences.edit();
+//        editor.putString("editTextFrom", editTextFrom.getText().toString());
+//        editor.putString("editTextTo", editTextTo.getText().toString());
+//        editor.putInt("spinnerTo", spinnerTo.getSelectedItemPosition());
+//        editor.putInt("spinnerFrom", spinnerFrom.getSelectedItemPosition());
+//        editor.putString("labelFrom", labelFrom.getText().toString());
+//        editor.putString("labelTo", labelTo.getText().toString());
+//        editor.apply();
+  }
 
 
-    public ConverterTabFragment(Converter converter) {
-        mConverter = converter;
+    public ConverterTabFragment() {
     }
 
     // TODO: Rename and change types and number of parameters
-    public static ConverterTabFragment newInstance(Converter converter) {
-        ConverterTabFragment fragment = new ConverterTabFragment(converter);
+    public static ConverterTabFragment newInstance() {
+        ConverterTabFragment fragment = new ConverterTabFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -70,6 +69,7 @@ public class ConverterTabFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPreferences = getContext().getSharedPreferences(sharedPrefFile, Context.MODE_PRIVATE);
+        mConverter = new Converter(getContext());
     }
 
     @Override
@@ -92,12 +92,20 @@ public class ConverterTabFragment extends Fragment {
 
 
         HashMap<String, Double> valueMap = mConverter.getValueMap();
-        CharSequence[] charCodes = valueMap.keySet().toArray(new CharSequence[0]);
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(view.getContext(),
-                android.R.layout.simple_spinner_item, charCodes);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerFrom.setAdapter(adapter);
-        spinnerTo.setAdapter(adapter);
+        if (valueMap != null) {
+            CharSequence[] charCodes = valueMap.keySet().toArray(new CharSequence[0]);
+            ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(view.getContext(),
+                    android.R.layout.simple_spinner_item, charCodes);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerFrom.setAdapter(adapter);
+            spinnerTo.setAdapter(adapter);
+            if(savedInstanceState == null) {
+                int usdPosition = adapter.getPosition("USD");
+                int rubPosition = adapter.getPosition("RUB");
+                spinnerFrom.setSelection(usdPosition);
+                spinnerTo.setSelection(rubPosition);
+            }
+        }
 
 
         editTextFrom.addTextChangedListener(new TextWatcher() {
@@ -114,6 +122,9 @@ public class ConverterTabFragment extends Fragment {
                     double nominal = mConverter.convert(codeFrom, codeTo);
                     double result = nominal * value;
                     editTextTo.setText(String.format("%.3f", result));
+                }
+                else {
+                    editTextTo.setText("");
                 }
             }
 
@@ -146,23 +157,6 @@ public class ConverterTabFragment extends Fragment {
 
             }
         });
-        if(savedInstanceState == null) {
-            int usdPosition = adapter.getPosition("USD");
-            int rubPosition = adapter.getPosition("RUB");
-            spinnerFrom.setSelection(usdPosition);
-            spinnerTo.setSelection(rubPosition);
-            editTextFrom.setText(String.format("%.3f", 1.0));
-        }
-        if(mPreferences.contains("editTextFrom")) {
-            editTextFrom.setText(mPreferences.getString("editTextFrom", ""));
-            editTextTo.setText(mPreferences.getString("editTextTo", ""));
-            labelFrom.setText(mPreferences.getString("labelFrom", ""));
-            labelTo.setText(mPreferences.getString("labelTo", ""));
-            spinnerTo.setSelection(mPreferences.getInt("spinnerTo", 0));
-            spinnerFrom.setSelection(mPreferences.getInt("spinnerFrom", 0));
-        }
-
-
 
     }
 }
