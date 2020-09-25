@@ -14,7 +14,7 @@ public class Converter {
         updateExchangeRate();
     }
 
-    private void updateExchangeRate() {
+    public void updateExchangeRate() {
         String exchangeRate;
         String filename = mContext.getString(R.string.file_name);
         try  (FileInputStream inputStream = mContext.openFileInput(filename)){

@@ -1,7 +1,5 @@
 package com.example.currencyconverter;
 
-import android.app.Activity;
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -23,11 +21,6 @@ import android.widget.TextView;
 
 import java.util.HashMap;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ConverterTabFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class ConverterTabFragment extends Fragment {
     private Spinner spinnerFrom;
     private Spinner spinnerTo;
@@ -40,24 +33,9 @@ public class ConverterTabFragment extends Fragment {
     private SharedPreferences mPreferences;
 
 
-    @Override
-    public void onPause() {
-        super.onPause();
-//        SharedPreferences.Editor editor = mPreferences.edit();
-//        editor.putString("editTextFrom", editTextFrom.getText().toString());
-//        editor.putString("editTextTo", editTextTo.getText().toString());
-//        editor.putInt("spinnerTo", spinnerTo.getSelectedItemPosition());
-//        editor.putInt("spinnerFrom", spinnerFrom.getSelectedItemPosition());
-//        editor.putString("labelFrom", labelFrom.getText().toString());
-//        editor.putString("labelTo", labelTo.getText().toString());
-//        editor.apply();
-  }
-
-
     public ConverterTabFragment() {
     }
 
-    // TODO: Rename and change types and number of parameters
     public static ConverterTabFragment newInstance() {
         ConverterTabFragment fragment = new ConverterTabFragment();
         Bundle args = new Bundle();

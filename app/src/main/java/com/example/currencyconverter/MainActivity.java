@@ -1,50 +1,50 @@
 package com.example.currencyconverter;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.Iterator;
-
-import javax.net.ssl.HttpsURLConnection;
+import java.io.OutputStream;
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
     private Converter converter;
-    private ConverterTabFragment converterTabFragment;
-    private ListTabFragment listTabFragment;
-    private String sharedPrefFile = "com.example.currencyconverter";
-    private SharedPreferences mPreferences;
+    private static final int JOB_ID = 694;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         converter = new Converter(getApplicationContext());
-        if(converter.getValueMap() == null) {
-            new ExchangeRateFetcher().execute();
-        }
 
+        HashMap<String, Double> valueMap = converter.getValueMap();
+        if(valueMap == null || valueMap.isEmpty()) {
+            try {
+                OutputStream outputStream = openFileOutput(getString(R.string.file_name), Context.MODE_PRIVATE);
+                ExchangeRateFetcher asyncTask = new ExchangeRateFetcher(outputStream);
+                try {
+                    asyncTask.execute();
+                }
+                catch (Exception e) {
+                    Toast.makeText(getApplicationContext(), "Check Internet Connection", Toast.LENGTH_SHORT).show();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         TabLayout tabLayout = findViewById(R.id.tab_layout);
         tabLayout.addTab(tabLayout.newTab().setText("Converter"));
         tabLayout.addTab(tabLayout.newTab().setText("List"));
@@ -52,14 +52,23 @@ public class MainActivity extends AppCompatActivity {
         final ViewPager viewPager = findViewById(R.id.pager);
         final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(),
                 tabLayout.getTabCount());
-        converterTabFragment = (ConverterTabFragment) adapter.getItem(0);
-        listTabFragment = (ListTabFragment) adapter.getItem(1);
         viewPager.setAdapter(adapter);
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new ExchangeRateFetcher().execute();
+                try {
+                    OutputStream outputStream = openFileOutput(getString(R.string.file_name), Context.MODE_PRIVATE);
+                    ExchangeRateFetcher asyncTask = new ExchangeRateFetcher(outputStream);
+                    try {
+                        asyncTask.execute();
+                    }
+                    catch (Exception e) {
+                        Toast.makeText(getApplicationContext(), "Check Internet Connection", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -80,101 +89,23 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        scheduleJob();
+    }
+
+    public void scheduleJob() {
+        JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+
+        ComponentName serviceName = new ComponentName
+                (getPackageName(), DownloadJobService.class.getName());
+        JobInfo.Builder jobBuilder = new JobInfo.Builder(JOB_ID, serviceName);
+
+        //update every 12 hrs
+        long period = 12 * 60 *  60 * 1000;
+        jobBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setPeriodic(period);
+        JobInfo jobInfo = jobBuilder.build();
+        scheduler.schedule(jobInfo);
     }
 
 
-    public class ExchangeRateFetcher extends AsyncTask<Void, Void, String> {
-        private static final String BANK_URL = "https://www.cbr-xml-daily.ru/daily_json.js";
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            return getRateInfo();
-        }
-
-        private String getRateInfo() {
-            HttpsURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            String rateJSONString = null;
-
-            try {
-                URL requestURL = new URL(BANK_URL);
-
-                urlConnection = (HttpsURLConnection) requestURL.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                StringBuilder builder = new StringBuilder();
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    builder.append(line);
-                    builder.append("\n");
-                }
-                if (builder.length() == 0) {
-                    return null;
-                }
-                rateJSONString = builder.toString();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-
-            return rateJSONString;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            StringBuilder output = new StringBuilder();
-            try {
-                JSONObject jsonObject = new JSONObject(s);
-                JSONObject valuteObject = jsonObject.getJSONObject("Valute");
-                String charCode, nominal, value, name;
-
-                for (Iterator<String> it = valuteObject.keys(); it.hasNext(); ) {
-                    String key = it.next();
-                    JSONObject item = valuteObject.getJSONObject(key);
-                    charCode = item.getString("CharCode");
-                    nominal = item.getString("Nominal");
-                    value = item.getString("Value");
-                    name = item.getString("Name");
-
-                    int intNominal = Integer.parseInt(nominal);
-                    double valuePerNote = Double.parseDouble(value) / intNominal;
-
-                    output.append(String.format("%s_%s_%f\n", charCode, name, valuePerNote));
-                }
-                output.append(String.format("%s_%s_%f\n", "RUB", "Российский рубль", 1.0));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-
-            FileOutputStream outputStream;
-            try {
-                outputStream = openFileOutput(getString(R.string.file_name), Context.MODE_PRIVATE);
-                outputStream.write(output.toString().getBytes());
-                outputStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
-
-            super.onPostExecute(s);
-        }
-    }
 }
